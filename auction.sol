@@ -3,6 +3,7 @@ pragma solidity >0.8.0;
 
 //TODO: Revisar lógica de cuando refundo parcialmente no haga pop o delete sobre el array original (quizás con otra propiedad sobre Bidders ej isRefunded?)
 //TODO: Cambiar las variables privadas a privadas
+//TODO: Cambiar nombre a la funcion refundAll, podria ir endAuction
 //TODO: Revisar la oferta inicial, más que nada el address 0 (creo que está ok)
 //TODO: Cambiar hardcodeo de tiempos y demás que se agregaron por pruebas
 //TODO: Hacer una prueba general final
