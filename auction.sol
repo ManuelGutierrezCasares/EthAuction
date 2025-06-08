@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >0.8.0;
 
-//TODO: Revisar lógica de cuando refundo parcialmente no haga pop o delete sobre el array original (quizás con otra propiedad sobre Bidders ej isRefunded?)
-//TODO: Cambiar las variables privadas a privadas
-//TODO: Cambiar nombre a la funcion refundAll, podria ir endAuction
-//TODO: Revisar la oferta inicial, más que nada el address 0 (creo que está ok)
-//TODO: Cambiar hardcodeo de tiempos y demás que se agregaron por pruebas
-//TODO: Hacer una prueba general final
-//TODO: Documentar todo
 contract Auction {
 
     struct Bidders {
@@ -19,19 +12,20 @@ contract Auction {
     event AuctionEnded();
     event TimeExtended(uint256 indexed stopTime, uint256 amount);
 
-    Bidders public winner;
-    Bidders[] public bidders;
-    uint256 public startTime;
-    uint256 public stopTime;
-    bool public activeContractFlag;
-    address public creator;
-    bool public contractRefunded;
+    Bidders private winner;
+    Bidders private winnerEnded;
+    Bidders[] private bidders;
+    Bidders[] private biddersLog;
+    uint256 private startTime;
+    uint256 private stopTime;
+    bool private activeContractFlag;
+    address private creator;
+    bool private contractRefunded;
 
     constructor(){
         // Initializing timers
         startTime = block.timestamp;
-        stopTime = startTime + 1 minutes;
-        //stopTime = startTime + 7 days;
+        stopTime = startTime + 7 days;
 
         // Initializing winner => Address pointing to null, value being starting value = 100
         winner.bidderAddress = address(0);
@@ -47,6 +41,7 @@ contract Auction {
     modifier checkIsActive() {
         if (block.timestamp > stopTime) {
             activeContractFlag = false;
+            winnerEnded = winner;
         }
         _;
     }
@@ -72,34 +67,38 @@ contract Auction {
     }
 
     function bid() external payable checkIsActive requireIsActive {
-        require(msg.value > (winner.value * 105/100), "Your bid must be at least 105% of the previous bid!");
+        require(msg.value > (winner.value * 105/100), "Your bid must be at least 5% higher than the previous bid!");
         
         checkTimeExtension();
         
         winner.bidderAddress = msg.sender;
         winner.value = msg.value;
-       
-        emit NewOffer(msg.sender, msg.value);
 
         bidders.push(Bidders(msg.sender, msg.value));
+        biddersLog.push(Bidders(msg.sender, msg.value));
+
+        emit NewOffer(msg.sender, msg.value);
     }
 
     function checkTimeExtension() private {
         if (block.timestamp > stopTime - 10 minutes) {
             stopTime += 10 minutes;
-            emit TimeExtended(stopTime, msg.value);
+            emit TimeExtended(stopTime, winner.value);
         }
     }
 
     function showWiner() view external returns(Bidders memory) {
+        if (!activeContractFlag) {
+            return winnerEnded;
+        }
         return winner;
     }
 
     function showOffers() view external returns (Bidders[] memory) {
-        return bidders;
+        return biddersLog;
     }
 
-    function refundAll() checkIsActive requireIsNotActive onlyOwner noPreviousRefund public payable {
+    function endAuction() checkIsActive requireIsNotActive onlyOwner noPreviousRefund public payable {
         //Loops through all bidders array and send eths to whoever bidded on the auction but the winner
         uint256 len = bidders.length;
         for(uint256 i= 0; i < len; i++) {
@@ -135,5 +134,3 @@ contract Auction {
     }
 
 }
-
-
