@@ -33,7 +33,7 @@ contract Auction {
         stopTime = startTime + 1 minutes;
         //stopTime = startTime + 7 days;
 
-        // Initializing winner => Address pointing to null, value being min bid = 100
+        // Initializing winner => Address pointing to null, value being starting value = 100
         winner.bidderAddress = address(0);
         winner.value = 100;
 
